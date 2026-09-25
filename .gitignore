@@ -1,0 +1,24 @@
+# --- General / OS / IDE ---
+.env
+.env.local
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# --- Runtime data ---
+data/
+*.log
+output.txt
+*.db

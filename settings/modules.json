@@ -1,0 +1,7 @@
+{
+  "disabled": [],
+  "required": [
+    "basic",
+    "system"
+  ]
+}

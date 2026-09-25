@@ -1,0 +1,9 @@
+# Discord Bot 發布基準依賴
+# 由 requirements.txt 的發布相容範圍固定為已選定版本。
+# 若更新依賴，應重新執行完整測試後同步更新本檔。
+
+discord.py[voice]==2.7.1
+audioop-lts==0.2.1; python_version >= "3.13"
+python-dotenv==1.2.2
+yt-dlp[default]==2026.8.19
+markitdown[pdf,docx,pptx,xlsx,xls]==0.1.6

@@ -1,0 +1,7 @@
+{
+  "panel_title": "身分組領取",
+  "panel_description": "點擊下方按鈕以領取或移除身分組",
+  "management_timeout_seconds": 300,
+  "selection_timeout_seconds": 180,
+  "confirmation_timeout_seconds": 60
+}

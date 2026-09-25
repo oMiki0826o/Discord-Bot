@@ -1,0 +1,13 @@
+{
+  "cooldown_seconds": 300,
+  "max_per_user": 1,
+  "channel_prefix": "ticket-",
+  "category_name": "工單",
+  "archive_category": "",
+  "panel_title": "需要幫助嗎？",
+  "panel_description": "點擊下方按鈕建立工單，我們的支援團隊將盡快協助您。",
+  "management_timeout_seconds": 300,
+  "member_selection_timeout_seconds": 180,
+  "confirmation_timeout_seconds": 60,
+  "close_delay_seconds": 5
+}

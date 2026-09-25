@@ -1,0 +1,11 @@
+{
+  "error_reporting": {
+    "enabled": true,
+    "full_context": false,
+    "destination": "owner",
+    "channel_id": null
+  },
+  "shutdown_report": {
+    "send_log_file": true
+  }
+}

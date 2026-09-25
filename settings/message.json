@@ -1,0 +1,9 @@
+{
+  "panel_timeout_seconds": 300,
+  "require_management": false,
+  "admin_panel_timeout_seconds": 180,
+  "plain_max_content_length": 1950,
+  "webhook_max_content_length": 1900,
+  "max_attachments": 3,
+  "webhook_name": "Discord Bot"
+}
