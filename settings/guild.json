@@ -1,8 +1,0 @@
-{
-  "welcome_template": "歡迎 {user} 加入 **{guild}**！",
-  "leave_template": "**{username}** 離開了 **{guild}**",
-  "embed_footer": "Discord Bot",
-  "panel_timeout_seconds": 300,
-  "selection_timeout_seconds": 120,
-  "confirmation_timeout_seconds": 60
-}
