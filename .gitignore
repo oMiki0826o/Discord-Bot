@@ -22,3 +22,4 @@ data/
 *.log
 output.txt
 *.db
+settings/*.json
