@@ -1,0 +1,5 @@
+# Discord Bot 開發與測試依賴
+# 安裝：python -m pip install -r requirements-dev.txt
+
+-r requirements.txt
+pytest==9.1.1

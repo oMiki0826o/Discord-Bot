@@ -1,0 +1,24 @@
+# Discord Bot 依賴套件
+# 安裝：python -m pip install -r requirements.txt
+
+# ── Discord ──────────────────────
+discord.py[voice]==2.7.1
+audioop-lts>=0.2.1; python_version >= "3.13"
+
+# ── 環境變數 ──────────────────────
+python-dotenv==1.2.2
+
+# ── AI Provider ──────────────────────
+google-genai>=2.5
+
+# ── 音樂播放 ──────────────────────
+yt-dlp[default]>=2026.8.19
+
+# ── 文件解析 ──────────────────────
+markitdown[pdf,docx,pptx,xlsx,xls]>=0.1.6
+
+# ── 中文檢索 ──────────────────────
+opencc-python-reimplemented>=0.1.7
+
+# ── 安全正規表示式 ──────────────────────
+regex>=2026.1.15

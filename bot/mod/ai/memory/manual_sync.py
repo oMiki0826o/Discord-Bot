@@ -1,0 +1,136 @@
+"""
+bot/mod/ai/memory/manual_sync.py
+
+Modification():
+
+- Owner-managed JSON memory normalization and SQLite retrieval projection。
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import re
+import tempfile
+import uuid
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
+
+from ..database import AiDatabase
+from ..history.lexical import normalize_lexical_document, normalize_lexical_query
+
+_NAME = re.compile(r"^.+\((?P<user_id>\d{17,20})\)\.json$")
+
+
+@dataclass(frozen=True, slots=True)
+class ManualSyncReport:
+    records: int
+
+
+class ManualMemorySyncService:
+    def __init__(self, database: AiDatabase, root: Path, *, clock=lambda: datetime.now().astimezone()) -> None:
+        self.database = database
+        self.root = Path(root)
+        self.clock = clock
+
+    def sync(self) -> ManualSyncReport:
+        documents = self._prepare_documents()
+        rows = []
+        for path, user_id, document in documents:
+            self._atomic_write(path, document)
+            rows.extend(self._rows(path, user_id, document))
+        with self.database.transaction() as connection:
+            connection.execute("DELETE FROM manual_memory_search")
+            connection.execute("DELETE FROM manual_memory_records")
+            for row in rows:
+                connection.execute(
+                    "INSERT INTO manual_memory_records (memory_id, source_path, user_id, memory_key, category, content, importance, confidence, source, updated_at, version, content_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", row,
+                )
+                connection.execute(
+                    "INSERT INTO manual_memory_search (memory_id, user_id, search_text) VALUES (?, ?, ?)",
+                    (row[0], row[2], normalize_lexical_document(f"{row[3]} {row[4]} {row[5]}")),
+                )
+        return ManualSyncReport(len(rows))
+
+    def validate(self) -> ManualSyncReport:
+        """Validate and normalize in memory only; no source or SQLite writes."""
+        documents = self._prepare_documents()
+        return ManualSyncReport(sum(len(document["memories"]) for _path, _user_id, document in documents))
+
+    def preview(self) -> ManualSyncReport:
+        """Return the pending normalized record count without applying it."""
+        return self.validate()
+
+    def _prepare_documents(self) -> list[tuple[Path, str, dict]]:
+        now = self.clock().isoformat(timespec="seconds")
+        documents: list[tuple[Path, str, dict]] = []
+        for path in sorted(self.root.glob("*.json")) if self.root.is_dir() else ():
+            match = _NAME.fullmatch(path.name)
+            if match is None:
+                raise ValueError(f"invalid user memory filename: {path.name}")
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            user_id = match.group("user_id")
+            if not isinstance(payload, dict) or payload.get("user_id") != user_id:
+                raise ValueError(f"user_id does not match filename: {path.name}")
+            normalized = self._normalize(payload, now=now)
+            documents.append((path, user_id, normalized))
+        return documents
+
+    @staticmethod
+    def _rows(path: Path, user_id: str, document: dict) -> list[tuple[object, ...]]:
+        return [
+            (
+                item["id"], path.name, user_id, item["key"], item["category"], item["content"],
+                item["importance"], item["confidence"], item["source"], item["updated_at"], item["version"],
+                hashlib.sha256(item["content"].encode()).hexdigest(),
+            )
+            for item in document["memories"]
+        ]
+
+    def search(self, user_id: str, query: str, *, limit: int) -> tuple[dict[str, object], ...]:
+        with self.database.connect() as connection:
+            rows = connection.execute(
+                "SELECT r.* FROM manual_memory_search s JOIN manual_memory_records r ON r.memory_id = s.memory_id WHERE s.user_id = ? AND manual_memory_search MATCH ? ORDER BY bm25(manual_memory_search), r.importance DESC LIMIT ?",
+                (user_id, normalize_lexical_query(query), limit),
+            ).fetchall()
+        return tuple(dict(row) for row in rows)
+
+    @staticmethod
+    def _normalize(payload: dict, *, now: str) -> dict:
+        preferences = payload.get("preferences", {})
+        memories = list(payload.get("memories", []))
+        if not isinstance(preferences, dict) or not isinstance(memories, list):
+            raise ValueError("preferences must be object and memories must be array")
+        for key, value in preferences.items():
+            text = f"使用者偏好{key}：{value if not isinstance(value, list) else '、'.join(map(str, value))}"
+            memories.append({"key": f"preference.{key}", "category": "preference", "content": text, "importance": 4})
+        normalized = []
+        for item in memories:
+            if not isinstance(item, dict) or not isinstance(item.get("content"), str) or not item["content"].strip():
+                raise ValueError("memory content must not be blank")
+            key = str(item.get("key") or "general." + hashlib.sha256(item["content"].casefold().encode()).hexdigest()[:16]).casefold()
+            importance = item.get("importance", 3)
+            if not isinstance(importance, int) or isinstance(importance, bool) or not 1 <= importance <= 5:
+                raise ValueError("importance must be 1..5")
+            normalized.append({
+                "id": str(item.get("id") or "mem_" + uuid.uuid4().hex), "key": key,
+                "category": str(item.get("category") or key.split(".", 1)[0]), "content": item["content"].strip(),
+                "importance": importance, "source": "manual", "updated_at": str(item.get("updated_at") or now),
+                "confidence": 1.0, "version": int(item.get("version") or 1),
+            })
+        return {"user_id": payload["user_id"], "preferences": preferences, "memories": normalized}
+
+    @staticmethod
+    def _atomic_write(path: Path, payload: dict) -> None:
+        fd, name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                json.dump(payload, handle, ensure_ascii=False, indent=2)
+                handle.write("\n")
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(name, path)
+        finally:
+            Path(name).unlink(missing_ok=True)
