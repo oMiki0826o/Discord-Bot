@@ -1,51 +1,47 @@
-# 發布指南
+# GitHub 發布指南
 
-正式發布時，請從原始碼建立乾淨的 ZIP，不要直接壓縮日常工作的專案資料夾。
+本專案以 Git 推送可追蹤檔案到公開 GitHub repository. 不要使用 GitHub 網頁直接拖曳整個工作目錄, 因為那樣不會套用 `.gitignore`.
 
-## 建立 ZIP
-
-先完成測試：
+## 首次發布
 
 ```bash
-python -m pytest -q
-python -m compileall -q bot tools tests main.py
-git diff --check
+git init
+git add .
+git status
 ```
 
-再執行：
+確認暫存清單後, 建立首次提交並推送到 `https://github.com/oMiki0826o/Discord-bot`.
+
+## 後續更新
 
 ```bash
-python tools/build_release.py
+git add .
+git status
 ```
 
-預設輸出：
+每次提交前都應檢查暫存清單. 只提交程式碼, 文件, 依賴宣告與安全範本.
 
-```text
-dist/Discord-Bot-v0.1.0.zip
-```
+## 不應進入 GitHub repository 的內容
 
-壓縮包內會有單一根目錄 `Discord-Bot-v0.1.0/`，方便解壓後直接使用。
+- `.env`, `.env.local`.
+- `.venv/`, `venv/`, Python cache 與測試 cache.
+- `data/`, SQLite, Log, AI 使用者記憶與 Prompt override.
+- `settings/*.json` 部署端設定.
+- `dist/`, `.git/`, `.DS_Store`, `__MACOSX/` 與其他工作目錄附加檔.
+- `tools/` 與 `tests/` 維護端內容.
+- `.superpowers/`, `docs/superpowers/` 與其他內部協作紀錄.
 
-## 一定不應進入發布包的內容
+這些路徑已由 `.gitignore` 排除. `.env.example` 與 `settings/README.md` 會保留, 讓部署者知道必要環境變數與設定位置.
 
-- `.env`、`.env.local`。
-- `.git/` 與其他 VCS metadata。
-- `.venv/`、`venv/`。
-- `data/`、SQLite、Log、AI 使用者記憶與 Prompt override。
-- `settings/*.json` 部署端設定。
-- `__pycache__/`、`.pytest_cache/`、`.ruff_cache/`、`.mypy_cache/`。
-- `.DS_Store`、`__MACOSX/` 等作業系統附加檔。
-- `dist/` 舊發布物。
-- `tools/` 維護端封裝與匯入工具。
-- `.superpowers/`、`docs/superpowers/` 等內部工作規格與代理執行紀錄。
+## 推送前檢查
 
-`settings/README.md` 與 `.env.example` 會保留，讓使用者知道設定位置與必要環境變數。
+1. `.env.example` 不包含真實 Token 或 API Key.
+2. README 的啟動入口為 `python main.py`.
+3. `requirements.txt` 與 `requirements-lock.txt` 符合驗證版本.
+4. `git status` 未列出本文件的不應發布內容.
+5. 必要 Module 可以正常載入, 且 `modules.required` 沒有被停用.
+6. Slash Command, Owner Prefix Command, Module reload 與安全關閉至少完成一次實機測試.
 
-## 發布前人工確認
+## 原始碼可見性
 
-1. `.env.example` 不包含真實 Token / API Key。
-2. README 的啟動入口為 `python main.py`。
-3. `requirements.txt` 與 `requirements-lock.txt` 符合本次驗證版本。
-4. 必要 Module 可以正常載入，且 `modules.required` 沒有被停用。
-5. Slash Command、Owner Prefix Command、Module reload 與安全關閉至少做一次實機測試。
-6. 若更新 AI model pool，確認模型 ID 與帳號實際可用額度，而不是只看名稱存在。
+此 repository 是 Public. 已追蹤的 `bot/` 與 `main.py` 會公開可見. `.gitignore` 只能排除本機檔案, 無法隱藏已提交的原始碼.

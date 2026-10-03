@@ -17,7 +17,7 @@ venv/
 .ruff_cache/
 .mypy_cache/
 
-# --- Runtime data ---
+# --- Local runtime and maintainer-only content ---
 data/
 *.log
 output.txt
@@ -25,6 +25,7 @@ output.txt
 settings/*.json
 tools/
 tests/
+
 # --- Build / test reports ---
 dist/
 .coverage

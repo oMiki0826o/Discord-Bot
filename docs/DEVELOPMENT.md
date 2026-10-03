@@ -1,6 +1,6 @@
 # 開發指南
 
-這份指南給需要在本機修改、除錯或擴充 Bot 的開發者。單純部署請先閱讀專案根目錄的 [README](../README.md)。
+這份指南給私有維護工作區中需要在本機修改、除錯或擴充 Bot 的開發者。公開 GitHub repository 會依 `.gitignore` 排除 `tools/` 與 `tests/`。單純部署請先閱讀專案根目錄的 [README](../README.md)。
 
 ## 建立開發環境
 
@@ -89,14 +89,13 @@ AI 的跨模組公開邊界是 `bot.mod.ai.api`。`agent` 不應直接操作 AI 
 
 Web／URL Context 與模型可用性屬於外部服務能力，不能只靠單元測試證明。測試應至少區分：正常回覆、429 quota、503/unavailable、timeout、empty response 與 grounding verification failure。
 
-## 建立發布包
+## GitHub 推送前檢查
 
-不要直接壓縮整個工作目錄。工作目錄可能含 `.env`、`.git/`、`.venv/`、`data/`、本機 settings 與 cache。
-
-使用：
+請使用 Git 或 GitHub Desktop 推送, 不要在 GitHub 網頁直接上傳整個工作目錄。`.gitignore` 會排除 `.env`, `data/`, `settings/*.json`, 虛擬環境, cache, `dist/`, `tools/` 與 `tests/`。
 
 ```bash
-python tools/build_release.py
+git add .
+git status
 ```
 
-輸出會放在 `dist/`。詳細排除規則與人工檢查項目請看 [發布指南](RELEASE.md)。
+確認暫存清單只包含可公開的程式, 文件, 依賴宣告與範本後再提交。此 repository 是 Public, 已提交的 Python 原始碼會公開可見。
